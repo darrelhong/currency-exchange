@@ -2,8 +2,8 @@ import { NewRate } from "../db/schema.js";
 import {
   CRYPTO_CURRENCIES,
   Currency,
-  CurrencyType,
   FIAT_CURRENCIES,
+  isFiatCurrency,
 } from "../types/rates.js";
 
 const getCoinbaseRate = async ({
@@ -34,9 +34,7 @@ export const getExchageRates = async () => {
     const baseCurrency = currencies[index];
 
     // keep only fiat values if the currency is crypto, and vice versa
-    const resultCurrencies = (
-      FIAT_CURRENCIES as ReadonlyArray<string>
-    ).includes(baseCurrency)
+    const resultCurrencies = isFiatCurrency(baseCurrency)
       ? CRYPTO_CURRENCIES
       : FIAT_CURRENCIES;
 
