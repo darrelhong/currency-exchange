@@ -1,4 +1,4 @@
-import { NewRate } from "../db/schema.js";
+import { NewRate, Rate } from "../db/schema.js";
 import {
   CRYPTO_CURRENCIES,
   Currency,
@@ -52,4 +52,15 @@ export const getExchageRates = async () => {
   }
 
   return result;
+};
+
+export const convertToObj = (arr: Rate[]) => {
+  const res: Record<string, Record<string, string>> = {};
+  for (const row of arr) {
+    if (!res[row.base_currency]) {
+      res[row.base_currency] = {};
+    }
+    res[row.base_currency][row.target_currency] = row.rate;
+  }
+  return res;
 };

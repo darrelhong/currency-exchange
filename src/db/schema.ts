@@ -9,4 +9,5 @@ export const rates = sqliteTable("rates", {
   rate: text("rate").notNull(),
 });
 
+export type Rate = InferModel<typeof rates> 
 export type NewRate = InferModel<typeof rates, "insert">;
