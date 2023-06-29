@@ -1,11 +1,11 @@
 import cron from "node-cron";
 
 import { getExchageRates } from "./utils/rates.js";
+import { db } from "./db/db.js";
+import { rates } from "./db/schema.js";
 
-cron.schedule("* * * * *", () => {
-  console.log("running a task every minute");
+// every minute
+cron.schedule("* * * * *", async () => {
+  const r = await getExchageRates();
+  await db.insert(rates).values(r).run();
 });
-
-const r = await getExchageRates({ currencyType: "fiat" });
-
-console.log(r)

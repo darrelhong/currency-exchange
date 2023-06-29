@@ -1,3 +1,4 @@
+import { NewRate } from "../db/schema.js";
 import {
   CRYPTO_CURRENCIES,
   Currency,
@@ -18,31 +19,39 @@ const getCoinbaseRate = async ({
   return data.rates as Record<string, string>;
 };
 
-export const getExchageRates = async ({
-  currencyType,
-}: {
-  currencyType: CurrencyType;
-}) => {
-  const currencies =
-    currencyType === "fiat" ? FIAT_CURRENCIES : CRYPTO_CURRENCIES;
-  const resultCurrencies =
-    currencyType === "fiat" ? CRYPTO_CURRENCIES : FIAT_CURRENCIES;
+export const getExchageRates = async () => {
+  const currencies = [...CRYPTO_CURRENCIES, ...FIAT_CURRENCIES];
 
   // fetch exchange rates from coinbase API in parallel
   const currencyRates = await Promise.all(
     currencies.map((currency) => getCoinbaseRate({ baseCurrency: currency }))
   );
 
-  // filter out the currencies we don't need and format the result
-  const rates = currencyRates.reduce((acc, curr, index) => {
-    const currency = currencies[index];
-    const rate = Object.fromEntries(
-      Object.entries(curr).filter(([key]) =>
-        (resultCurrencies as ReadonlyArray<string>).includes(key)
-      )
-    );
-    return { ...acc, [currency]: rate };
-  }, {} as Record<Currency, Record<Currency, string>>);
+  // format rates into array of objects with base currency and target currency and rate
+  let result: NewRate[] = [];
 
-  return rates;
+  for (const [index, ratesObj] of currencyRates.entries()) {
+    const baseCurrency = currencies[index];
+
+    // keep only fiat values if the currency is crypto, and vice versa
+    const resultCurrencies = (
+      FIAT_CURRENCIES as ReadonlyArray<string>
+    ).includes(baseCurrency)
+      ? CRYPTO_CURRENCIES
+      : FIAT_CURRENCIES;
+
+    for (const [targetCurrency, rate] of Object.entries(ratesObj)) {
+      if (
+        (resultCurrencies as ReadonlyArray<string>).includes(targetCurrency)
+      ) {
+        result.push({
+          base_currency: baseCurrency,
+          target_currency: targetCurrency,
+          rate,
+        });
+      }
+    }
+  }
+
+  return result;
 };

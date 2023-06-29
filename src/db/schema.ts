@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { InferModel, sql } from "drizzle-orm";
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 
 export const rates = sqliteTable("rates", {
@@ -8,3 +8,5 @@ export const rates = sqliteTable("rates", {
   created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
   rate: text("rate").notNull(),
 });
+
+export type NewRate = InferModel<typeof rates, "insert">;
