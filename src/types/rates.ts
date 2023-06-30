@@ -7,7 +7,7 @@ export const isFiatCurrency = (currency: string): currency is FiatCurrency =>
 export const CRYPTO_CURRENCIES = ["BTC", "ETH", "DOGE"] as const;
 type CryptoCurrency = (typeof CRYPTO_CURRENCIES)[number];
 
-export const isCrpytoCurrency = (
+export const isCryptoCurrency = (
   currency: string
 ): currency is CryptoCurrency =>
   CRYPTO_CURRENCIES.includes(currency as CryptoCurrency);

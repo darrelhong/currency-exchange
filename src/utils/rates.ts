@@ -4,6 +4,7 @@ import {
   Currency,
   FIAT_CURRENCIES,
   isFiatCurrency,
+  isCryptoCurrency,
 } from "../types/rates.js";
 
 const getCoinbaseRate = async ({
@@ -63,4 +64,14 @@ export const convertToObj = (arr: Rate[]) => {
     res[row.base_currency][row.target_currency] = row.rate;
   }
   return res;
+};
+
+export const validateCurrencyParamsPair = (base: string, target: string) => {
+  if (
+    (isFiatCurrency(base) && isFiatCurrency(target)) ||
+    (isCryptoCurrency(base) && isCryptoCurrency(target))
+  ) {
+    return false;
+  }
+  return true;
 };

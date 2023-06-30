@@ -1,8 +1,12 @@
 import cron from "node-cron";
 import express from "express";
-import { sql } from "drizzle-orm";
+import { and, between, eq, sql } from "drizzle-orm";
 
-import { convertToObj, getExchageRates } from "./utils/rates.js";
+import {
+  convertToObj,
+  getExchageRates,
+  validateCurrencyParamsPair,
+} from "./utils/rates.js";
 import { db } from "./db/db.js";
 import { Rate, rates } from "./db/schema.js";
 import {
@@ -21,7 +25,7 @@ const app = express();
 
 app.get("/exchange-rates", async (req, res) => {
   const base = (req.query.base || "crypto") as string;
-  console.log(base);
+  
   // check base is valid currencytype
   if (isCurrencyType(base)) {
     const selectedCurrencies =
@@ -48,6 +52,51 @@ app.get("/exchange-rates", async (req, res) => {
     res.json(convertToObj(result));
   } else {
     res.status(400).json({ error: "Invalid base currency" });
+  }
+});
+
+app.get("/historical-rates", async (req, res) => {
+  const {
+    base_currency,
+    target_currency,
+    start,
+    end = Date.now(),
+  }: {
+    base_currency?: string;
+    target_currency?: string;
+    start?: number;
+    end?: number;
+  } = req.query;
+
+  if (
+    base_currency &&
+    target_currency &&
+    start &&
+    validateCurrencyParamsPair(base_currency, target_currency as string)
+  ) {
+    const result = await db
+      .select({
+        value: rates.rate,
+        timestamp: sql`unixepoch(rates.created_at) * 1000`,
+      })
+      .from(rates)
+      .where(
+        and(
+          eq(rates.base_currency, base_currency),
+          eq(rates.target_currency, target_currency),
+          between(
+            rates.created_at,
+            sql<string>`datetime(${start / 1000}, 'unixepoch')`,
+            sql<string>`datetime(${end / 1000}, 'unixepoch')`
+          )
+        )
+      )
+      .orderBy(rates.created_at)
+      .all();
+
+    res.json(result);
+  } else {
+    res.status(400).json({ error: "Invalid parameters" });
   }
 });
 
